@@ -1,203 +1,140 @@
 # SagasWeave Architecture Design
 
-## Overview
+## 1. Introduction
 
-SagasWeave is a modular platform architecture designed for AI-assisted content creation and application development. The system follows a service-oriented architecture with a reusable core engine pattern.
+This document outlines the technical architecture of the SagasWeave platform, based on the [SagasWeave-Overall-PRD.md](../prd/SagasWeave-Overall-PRD.md). The architecture is designed to be modular, scalable, and AI-centric, supporting an automated workflow for creating and publishing interactive narratives.
 
-## Core Architecture Principles
+## 2. Core Principles
 
-### KISS (Keep It Simple Stupid)
-- Clear separation of concerns
-- Minimal complexity in each component
-- Straightforward service interfaces
+-   **Modularity & KISS (Keep It Simple, Stupid)**: The system is divided into distinct, independent repositories with clear responsibilities. This promotes separation of concerns, minimal complexity, and allows for independent development.
+-   **Automation**: Workflows are heavily automated using scripts and CI/CD pipelines to minimize manual intervention, ensure consistency, and enable rapid project setup.
+-   **AI-Optimized**: The architecture is built to seamlessly integrate AI through template-driven development, standardized patterns, and custom MCP Servers.
+-   **Content as Code**: Narrative content is treated as code—managed in Git, versioned, and processed through automated pipelines.
 
-### Modularity
-- Independent component development
-- Reusable service templates
-- Pluggable architecture
+## 3. High-Level Architecture
 
-### AI-Optimized
-- Template-driven development
-- Standardized patterns
-- Automated initialization
+SagasWeave employs a multi-repository architecture where each repository represents a core component. These components work together to provide a comprehensive platform for narrative creation and consumption.
 
-## System Components
+```mermaid
+graph TD
+    subgraph User Interaction
+        A[Author/Creator] -->|Writes/Edits on Mobile| B(Obsidian/Textastic)
+        B -->|Syncs via WorkingCopy| C[SW-Book Repository]
+        A -->|Initiates Automation on Mac| D[SW-System]
+        D -->|Processes Content| C
+        E[Developer] -->|Develops Core Engine| D
+        E -->|Develops App| F[SW-App Repository]
+        E -->|Develops Book Tooling| C
+        G[End User] -->|Consumes Content| H[SW-App]
+    end
 
-### 1. SW-System (Core Engine)
-**Purpose**: Reusable infrastructure and development tools
+    subgraph System Repositories
+        C -- Contains Narrative Assets & Tooling --> D
+        D -- Provides Services & Automation --> F
+        F -- Deployed via CI/CD --> H
+        I[SW-System-Dev] -- Contains Documentation --> D
+        I --> C
+        I --> F
+    end
 
-```
-SW-System/
-├── engine/              # Core reusable components
-├── init-scripts/        # Project initialization tools
-├── service-templates/   # Reusable service patterns
-├── automation/          # Cross-project automation
-├── shared-configs/      # Common configurations
-├── scripts/             # Development automation
-└── docs/               # Technical documentation
-```
-
-**Responsibilities**:
-- Core system architecture
-- Development automation (build, deploy, CI/CD)
-- Code quality tools (naming conventions, linting)
-- Service template provisioning
-- Cross-project utilities
-
-### 2. SW-Book (Content Creation)
-**Purpose**: Author-focused content creation and publishing
-
-```
-SW-Book/
-├── narratives/         # Stories, manuscripts, characters
-├── publishing/         # Publishing automation pipeline
-├── writing-tools/      # Author-specific automation
-├── services/          # Content-specific services
-│   ├── content-engine/    # From SW-System templates
-│   ├── publishing-api/    # From SW-System templates
-│   └── narrative-tools/   # Book-specific customizations
-└── manuscripts/       # Book drafts and chapters
+    style A fill:#f9f,stroke:#333,stroke-width:2px
+    style E fill:#f9f,stroke:#333,stroke-width:2px
+    style G fill:#f9f,stroke:#333,stroke-width:2px
 ```
 
-**Responsibilities**:
-- Narrative and storytelling content
-- Manuscript management
-- Publishing pipeline automation
-- Author workflow tools
-- Content organization and versioning
+## 4. Repository Breakdown
 
-### 3. SW-App (Product Application)
-**Purpose**: Frontend application and user experience
+### 4.1. `SW-System` (Core Engine)
 
-```
-SW-App/
-├── src/               # Application source code
-├── components/        # Reusable UI components
-├── features/          # Product-specific features
-├── services/          # App-specific services
-│   ├── frontend-api/     # From SW-System templates
-│   ├── user-management/  # From SW-System templates
-│   └── app-features/     # App-specific customizations
-└── assets/           # Static resources
-```
+-   **Purpose**: The central engine and automation hub. It provides reusable infrastructure and development tools.
+-   **Responsibilities**: Core architecture, development automation (build, deploy, CI/CD), code quality enforcement, service template provisioning, and hosting the AI integration server (MCP).
+-   **Structure**:
+    ```
+    SW-System/
+    ├── engine/              # Core reusable components
+    ├── init-scripts/        # Project initialization tools (e.g., 'sw-init')
+    ├── service-templates/   # Reusable service patterns (API, frontend, etc.)
+    ├── automation/          # Cross-project automation scripts
+    ├── shared-configs/      # Common configurations (Biome, Vitest)
+    └── docs/                # Technical documentation
+    ```
 
-**Responsibilities**:
-- User interface and experience
-- Frontend application logic
-- User interaction handling
-- Client-side state management
-- Product feature implementation
+### 4.2. `SW-Book` (Content Creation)
 
-### 4. SW-System-Dev (Development Hub)
-**Purpose**: Development coordination and documentation
+-   **Purpose**: Author-focused repository for content creation and publishing.
+-   **Responsibilities**: Storing narrative content (Markdown/MDX), manuscript management, and housing the publishing automation pipeline and author-specific tools.
+-   **Structure**:
+    ```
+    SW-Book/
+    ├── narratives/         # Stories, manuscripts, characters
+    ├── publishing/         # Publishing automation pipeline
+    ├── writing-tools/      # Author-specific automation
+    └── services/           # Content-specific services from SW-System templates
+    ```
 
-```
-SW-System-Dev/
-├── docs/              # Architecture and design docs
-├── sprints/           # Sprint planning and tracking
-├── Repos/             # Repository organization
-│   ├── book/             # Book-related repositories
-│   ├── product/          # Product-related repositories
-│   └── systems/          # System-related repositories
-└── chatGpt/          # AI interaction logs and summaries
-```
+### 4.3. `SW-App` (Product Application)
 
-**Responsibilities**:
-- Development coordination
-- Architecture documentation
-- Sprint planning and tracking
-- Repository organization
-- AI interaction management
+-   **Purpose**: The user-facing application that presents the interactive narrative.
+-   **Responsibilities**: Rendering content, providing the UI/UX, handling user interactions, and managing client-side state.
+-   **Structure**:
+    ```
+    SW-App/
+    ├── src/                # Application source code
+    ├── components/         # Reusable UI components
+    ├── features/           # Product-specific features
+    └── services/           # App-specific services from SW-System templates
+    ```
 
-## Service Delivery Pattern
+### 4.4. `SW-System-Dev` (Development Hub)
 
-### Initialization Flow
+-   **Purpose**: Central hub for development coordination, project documentation, and sprint planning.
+-   **Responsibilities**: Housing high-level documentation (PRDs, architecture), sprint plans, repository organization, and AI interaction logs.
+-   **Structure**:
+    ```
+    SW-System-Dev/
+    ├── docs/               # Architecture, design, and process docs
+    ├── sprints/            # Sprint planning and tracking
+    └── chatGpt/            # AI interaction logs and summaries
+    ```
+
+## 5. Workflow and Automation
+
+### 5.1. Initialization Flow
+
+A developer can quickly scaffold a new project using a command-line tool from `SW-System`:
+
 ```bash
-# Initialize new book project
+# Example: Initialize a new book project with specific services
 sw-init --project=book --services=content,publishing
 
-# Initialize new app project
+# Example: Initialize a new app project
 sw-init --project=app --services=frontend,api
-
-# Initialize custom project
-sw-init --project=custom --services=core,automation
 ```
 
-### Service Template System
-1. **Core Templates** (SW-System/service-templates/)
-   - API service template
-   - Frontend service template
-   - Database service template
-   - Authentication service template
+This relies on a **Service Template System** where core service templates (e.g., API, frontend) are defined in `SW-System` and customized for specific projects.
 
-2. **Project-Specific Services**
-   - Inherit from core templates
-   - Add domain-specific customizations
-   - Maintain consistency with core patterns
+### 5.2. Content-to-App Workflow
 
-### Configuration Management
-- **Shared configs** in SW-System for consistency
-- **Project-specific configs** for customization
-- **Environment-based** configuration override
+1.  **Creation**: An author creates/edits narrative content in Markdown and syncs it to the `SW-Book` repository.
+2.  **Automation**: A developer or an automated process runs a script from `SW-System`.
+3.  **Processing**: The script pulls content from `SW-Book`, validates it, transforms it (e.g., Markdown to JSON), and prepares it for the application.
+4.  **Integration**: The processed content is integrated into the `SW-App` repository.
+5.  **Deployment**: Changes to `SW-App` trigger a CI/CD pipeline (e.g., GitHub Actions) that builds and deploys the application.
 
-## Technology Stack
+## 6. Technology Stack
 
-### Core Technologies
-- **Node.js** (LTS) - Runtime environment
-- **TypeScript** - Type-safe development
-- **Biome** - Code formatting and linting
-- **Vitest** - Testing framework
-- **Git Submodules** - Repository management
+-   **Core**: Node.js (LTS), TypeScript, Biome (linting/formatting), Vitest (testing).
+-   **Development Tools**: Git Submodules, VS Code.
+-   **Automation & AI**: AST-grep & Comby (code transformation), Custom MCP Servers for AI service integration.
+-   **Content**: Markdown/MDX, Obsidian, Textastic, Working Copy.
+-   **Application**: React, Vite.
 
-### Development Tools
-- **AST-grep** - Code transformation
-- **Comby** - Structural search and replace
-- **MCP Servers** - AI service integration
-- **VS Code** - Development environment
+## 7. Benefits
 
-### AI Integration
-- **Template-driven** code generation
-- **Standardized patterns** for AI understanding
-- **Automated workflows** for repetitive tasks
-- **Documentation-first** approach
+-   **For Developers**: Rapid project setup, consistent patterns, reusable components, and automated quality checks.
+-   **For Content Creators**: Specialized tools, automated content management, and a streamlined publishing pipeline.
+-   **For AI Assistance**: A predictable, template-based structure and standardized conventions for easier integration and code generation.
 
-## Benefits
+## 8. Future Vision: VPS Automation
 
-### For Developers
-- **Rapid project setup** with init scripts
-- **Consistent patterns** across projects
-- **Reusable components** from core engine
-- **Automated quality checks** and formatting
-
-### For Content Creators
-- **Specialized tools** for writing and publishing
-- **Automated workflows** for content management
-- **Version control** for manuscripts
-- **Publishing pipeline** automation
-
-### For AI Assistance
-- **Predictable structure** for better understanding
-- **Template-based** code generation
-- **Standardized naming** conventions
-- **Clear separation** of concerns
-
-## Future Extensibility
-
-### New Project Types
-- Add new init templates to SW-System
-- Create project-specific service patterns
-- Maintain consistency with core architecture
-
-### Service Expansion
-- Extend service templates in SW-System
-- Add domain-specific customizations
-- Preserve backward compatibility
-
-### Platform Integration
-- Cloud deployment templates
-- CI/CD pipeline automation
-- Monitoring and logging services
-
-## Conclusion
-
-The SagasWeave architecture provides a scalable, maintainable, and AI-optimized platform for content creation and application development. The modular design with SW-System as the core engine enables rapid development while maintaining consistency and quality across all projects.
+The system is designed to eventually run headlessly on a Virtual Private Server (VPS). This will enable a fully automated CI/CD pipeline where changes pushed to `SW-Book` are automatically processed and deployed without manual intervention.
